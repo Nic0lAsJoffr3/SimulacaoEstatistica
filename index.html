@@ -27,19 +27,7 @@
 </body>
   
 <script>
-    if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.innerWidth < 768) {
-        document.body.innerHTML = `
-            <h1 style="
-                color:white;
-                font-family:Arial;
-                text-align:center;
-                margin-top:40vh;
-            ">
-                Disponível apenas no computador
-            </h1>
-        `;
-    }
-    else{
+   
     // Canvas Variaveis
     const Canvas = document.getElementById("Grafico");
     const ctx = Canvas.getContext("2d");
@@ -208,7 +196,7 @@
             ctx.font = "40px Arial";
             ctx.fillStyle = "#FFF"
             ctx.fillText("Numero De Sorteios: ∞", 20, 50)
-        }}
+        }
     }
 </script>
 
