@@ -25,98 +25,125 @@
 </body>
 
 <script>
-    // Canvas Variaveis
-    const Canvas = document.getElementById("Grafico");
-    const ctx = Canvas.getContext("2d");
-    Canvas.width = Math.max(
-        window.innerWidth,
-        window.innerHeight
-    );
+    
+        // Canvas Variaveis
+        const Canvas = document.getElementById("Grafico");
+        const ctx = Canvas.getContext("2d");
+        Canvas.width = Math.max(
+            window.innerWidth,
+            window.innerHeight
+        );
 
-    Canvas.height = Math.min(
-        window.innerWidth,
-        window.innerHeight
-    );
-    // Variaveis
-    var sizeList = 15
-    var sizeSpace = 5
-    var barNumbers = new Array(sizeList).fill(0);
-    var histBarNumbers = new Array(sizeList).fill(0);
-    var speed = 0.001;
-    var zoom = 0.1
-    var NumeroDeSorteios = 0;
-    let maxHistorico = 85;
+        Canvas.height = Math.min(
+            window.innerWidth,
+            window.innerHeight
+        );
+    if (window.innerWidth < 900 || window.innerWidth < window.innerHeight) {
 
-    let graphWidth = 400;
-    let graphHeight = 300;
+        document.body.innerHTML = `
+    
+    <div style="
+        color:#B2B2B2;
+        font-family:Arial;
+        display:block;
+        justify-content:center;
+        align-items:center;
+        height:100vh;
+        font-size:20px;
+        text-align:center;
+        background:#121212;
+    ">
+        Não Disponivel para <b> Celular</b><br>
+        Acesse 
+        <i><a style="color:white; font-size:20px;" href="https://nic0lasjoffr3.github.io/SimulacaoEstatistica/">https://nic0lasjoffr3.github.io/SimulacaoEstatistica/</a></i>
+        , em um <b>Computador</b>
 
-    let graphX = Canvas.width - graphWidth - 100;
-    let graphY = 100;
-    // Loop
-    setInterval(() => {
-        ctx.clearRect(0, 0, Canvas.width, Canvas.height);
-        loopBar();
-        loopErroGrafico()
+    </div>
+    
+    `;
+    }
+    else{
+        // Variaveis
+        var sizeList = 15
+        var sizeSpace = 5
+        var barNumbers = new Array(sizeList).fill(0);
+        var histBarNumbers = new Array(sizeList).fill(0);
+        var speed = 0.001;
+        var zoom = 0.1
+        var NumeroDeSorteios = 0;
+        let maxHistorico = 85;
 
-    }, 100)
+        let graphWidth = 400;
+        let graphHeight = 300;
+
+        let graphX = Canvas.width - graphWidth - 100;
+        let graphY = 100;
+        // Loop
+        setInterval(() => {
+            ctx.clearRect(0, 0, Canvas.width, Canvas.height);
+            loopBar();
+            loopErroGrafico()
+
+        }, 100)
 
 
-    let historico = [];
-    // Desenha o grafico do erro relativo
-    function loopErroGrafico() {
+        let historico = [];
+        // Desenha o grafico do erro relativo
+        function loopErroGrafico() {
 
-        ctx.font = "25px Arial";
+            ctx.font = "25px Arial";
 
-        ctx.fillStyle = "#FFF"
-        ctx.fillText("Gráfico De Convergência Estatística", graphX - 5, graphY - 20)
+            ctx.fillStyle = "#FFF"
+            ctx.fillText("Gráfico De Convergência Estatística", graphX - 5, graphY - 20)
 
-        ctx.fillStyle = "#404040"
-        ctx.font = "15px Arial";
-        ctx.fillText("Fonte: Algoritmo", graphX + 150, graphY + graphHeight + 60)
+            ctx.fillStyle = "#404040"
+            ctx.font = "15px Arial";
+            ctx.fillText("Fonte: Algoritmo", graphX + 150, graphY + graphHeight + 60)
 
-        ctx.fillStyle = "#DDD"
-        ctx.font = "20px Arial";
-        ctx.fillText("Tempo / Quantidade De Sorteios", graphX + 60, graphY + graphHeight + 25)
-        ctx.save();
-        ctx.translate(graphX - 20, graphY + graphHeight - 80);
-        ctx.rotate((Math.PI / 2) * 3);
-        ctx.fillText("Erro Estatístico", 0, 0)
-        ctx.restore();
-        historico.push(erroRelativo(barNumbers));
+            ctx.fillStyle = "#DDD"
+            ctx.font = "20px Arial";
+            ctx.fillText("Tempo / Quantidade De Sorteios", graphX + 60, graphY + graphHeight + 25)
+            ctx.save();
+            ctx.translate(graphX - 20, graphY + graphHeight - 80);
+            ctx.rotate((Math.PI / 2) * 3);
+            ctx.fillText("Erro Estatístico", 0, 0)
+            ctx.restore();
+            historico.push(erroRelativo(barNumbers));
 
-        if (historico.length > maxHistorico) {
-            historico.shift();
+            if (historico.length > maxHistorico) {
+                historico.shift();
+            }
+
+            ctx.save();
+            ctx.beginPath();
+            ctx.fillStyle = "#181818"
+            ctx.fillRect(graphX, graphY, graphWidth, graphHeight);
+            ctx.fillStyle = "#FFF"
+            ctx.rect(graphX, graphY, graphWidth, graphHeight);
+            ctx.clip();
+            ctx.beginPath();
+
+            for (let i = 0; i < historico.length; i++) {
+
+                let x = graphX + i * 5;
+
+                let y = graphY + graphHeight - historico[i] * 70;
+
+                if (i == 0)
+                    ctx.moveTo(x, y - 10);
+                else
+                    ctx.lineTo(x, y - 10);
+            }
+
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = "#00f0ff";
+            ctx.stroke();
+            ctx.restore();
+
+            ctx.strokeStyle = "white";
+            ctx.lineWidth = 2;
+            ctx.strokeRect(graphX, graphY, graphWidth, graphHeight);
         }
-
-        ctx.save();
-        ctx.beginPath();
-        ctx.fillStyle = "#181818"
-        ctx.fillRect(graphX, graphY, graphWidth, graphHeight);
-        ctx.fillStyle = "#FFF"
-        ctx.rect(graphX, graphY, graphWidth, graphHeight);
-        ctx.clip();
-        ctx.beginPath();
-
-        for (let i = 0; i < historico.length; i++) {
-
-            let x = graphX + i * 5;
-
-            let y = graphY + graphHeight - historico[i] * 70;
-
-            if (i == 0)
-                ctx.moveTo(x, y - 10);
-            else
-                ctx.lineTo(x, y - 10);
-        }
-
-        ctx.lineWidth = 3;
-        ctx.strokeStyle = "#00f0ff";
-        ctx.stroke();
-        ctx.restore();
-
-        ctx.strokeStyle = "white";
-        ctx.lineWidth = 2;
-        ctx.strokeRect(graphX, graphY, graphWidth, graphHeight);
     }
     function erroRelativo(lista) {
 
