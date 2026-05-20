@@ -16,8 +16,6 @@
         canvas {
             margin: 0;
             padding: 0;
-            height: 100vh;
-            width: 100vw;
         }
     </style>
 </head>
@@ -25,14 +23,20 @@
 <body>
     <canvas id="Grafico"></canvas>
 </body>
-  
+
 <script>
-   
     // Canvas Variaveis
     const Canvas = document.getElementById("Grafico");
     const ctx = Canvas.getContext("2d");
-    Canvas.width = window.innerWidth;
-    Canvas.height = Canvas.width/ 2;
+    Canvas.width = Math.max(
+        window.innerWidth,
+        window.innerHeight
+    );
+
+    Canvas.height = Math.min(
+        window.innerWidth,
+        window.innerHeight
+    );
     // Variaveis
     var sizeList = 15
     var sizeSpace = 5
