@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulação Estatistica</title>
+    <style>
+        body {
+            padding: 0;
+            margin: 0;
+            overflow: hidden;
+            background-color: #121212;
+            background-image: linear-gradient(180deg, #121212 50%, #15202B);
+        }
+
+        canvas {
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="Grafico"></canvas>
+</body>
+
+<script>
+
+    // Canvas Variaveis
+    const Canvas = document.getElementById("Grafico");
+    const ctx = Canvas.getContext("2d");
+    Canvas.width = window.innerWidth
+
+    Canvas.height = window.innerHeight
+
+    const params = new URLSearchParams(window.location.search);
+
+
+    // Variaveis
+    var sizeList = parseInt(params.get("sizeBar"));
+
+    var sizeSpace = 5
+    var barNumbers = [];
+    var histBarNumbers = [];
+    for (var i = 0; i < sizeList; i++) {
+        barNumbers[i] = 0;
+        histBarNumbers[i] = 0;
+    }
+    var speed = 0.001;
+    var zoom = 0.1
+    var NumeroDeSorteios = 0;
+    let maxHistorico = 85;
+
+    let graphWidth = 400;
+    let graphHeight = 300;
+
+    let graphX = Canvas.width - graphWidth - 100;
+    let graphY = 100;
+    // Loop
+    setInterval(() => {
+        ctx.clearRect(0, 0, Canvas.width, Canvas.height);
+        loopBar();
+        loopErroGrafico()
+
+    }, 100)
+
+
+    let historico = [];
+    // Desenha o grafico do erro relativo
+    function loopErroGrafico() {
+
+        historico.push(erroRelativo(barNumbers));
+
+        if (historico.length > maxHistorico) {
+            historico.shift();
+        }
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.fillStyle = "#181818"
+        ctx.fillRect(graphX, graphY, graphWidth, graphHeight);
+        ctx.fillStyle = "#FFF"
+        ctx.rect(graphX, graphY, graphWidth, graphHeight);
+        ctx.clip();
+        ctx.beginPath();
+        for (let i = 0; i < historico.length; i++) {
+
+            let x = graphX + i * 5;
+
+            let y = graphY + graphHeight - historico[i] * 70;
+
+            if (i == 0)
+                ctx.moveTo(x, y - 10);
+            else
+                ctx.lineTo(x, y - 10);
+        }
+
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = "#00f0ff";
+        ctx.stroke();
+        ctx.restore();
+
+        ctx.strokeStyle = "white";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(graphX, graphY, graphWidth, graphHeight);
+        ctx.font = "25px Arial";
+
+        ctx.fillStyle = "#FFF"
+        ctx.fillText("Gráfico De Convergência Estatística", graphX - 5, graphY - 20)
+
+        ctx.fillStyle = "#00f0ff"
+        ctx.font = "20px Arial";
+        ctx.fillText("Erro Relativo Atual: " + Math.round(historico.at(-1) * 100) / 100 + "%", graphX + 5, graphY + 20)
+
+        ctx.fillStyle = "#404040"
+        ctx.font = "15px Arial";
+        ctx.fillText("Fonte: Algoritmo", graphX + 150, graphY + graphHeight + 60)
+
+        ctx.fillStyle = "#DDD"
+        ctx.font = "20px Arial";
+        ctx.fillText("Tempo / Quantidade De Sorteios", graphX + 60, graphY + graphHeight + 25)
+        ctx.save();
+        ctx.translate(graphX - 20, graphY + graphHeight - 80);
+        ctx.rotate((Math.PI / 2) * 3);
+        ctx.fillText("Erro Estatístico", 0, 0)
+        ctx.restore();
+
+
+
+    }
+
+    function erroRelativo(lista) {
+
+        let media = lista.reduce((a, b) => a + b, 0) / lista.length;
+
+        let variancia = lista.reduce((soma, valor) => {
+            return soma + (valor - media) ** 2;
+        }, 0) / lista.length;
+
+        let desvio = Math.sqrt(variancia);
+
+        return desvio / media;
+    }
+
+    // Desenha o grafico de barras
+    function loopBar() {
+        if (NumeroDeSorteios < 10000000) {
+            for (var i = 0; i < sizeList; i++) {
+
+                ctx.fillStyle = "#00f0ff"
+                ctx.font = "25px Arial";
+                var space = sizeSpace
+
+                var sizeY = barNumbers[i] / zoom
+                var sizeX = ((Canvas.width - (space * (sizeList + 1))) / sizeList);
+                var posX = ((i * sizeX + ((i + 1) * space)))
+                var posY = Canvas.height - sizeY
+                ctx.fillRect(posX, posY, sizeX, sizeY)
+                ctx.textAlign = "center";
+                ctx.fillStyle = "#181818"
+                ctx.font = "25px Arial";
+                ctx.fillText(Math.round(barNumbers[i] / NumeroDeSorteios * 10000) / 100 + "%", posX + sizeX / 2, posY + 40)
+                ctx.textAlign = "left";
+                let xText = sizeX / 2 - 17.5;
+                let yText = 40
+                ctx.fillStyle = ((barNumbers[i] == histBarNumbers[i]) ? "#005a61" : "#00f0ff")
+                ctx.fillText(i + 1, xText + posX, posY - (yText - 15))
+
+
+                histBarNumbers[i] = barNumbers[i];
+            }
+
+            ctx.font = "40px Arial";
+            ctx.fillStyle = "#FFF"
+            ctx.fillText("Numero De Sorteios: " + NumeroDeSorteios, 20, 50)
+
+            // Sorteia e adiciona os numeros
+            for (var i = 0; i < speed; i++) {
+                barNumbers[Math.floor(Math.random() * sizeList)]++
+                NumeroDeSorteios++
+            }
+            speed *= 1.08;
+            zoom *= (1 + (speed / zoom / 3000));
+        }
+        else {
+            for (var i = 0; i < sizeList; i++) {
+
+                ctx.fillStyle = "#00f0ff"
+                ctx.font = "25px Arial";
+                var space = sizeSpace
+                var sizeY = barNumbers[0] / zoom
+                var sizeX = ((Canvas.width - (space * (sizeList + 1))) / sizeList);
+                var posX = ((i * sizeX + ((i + 1) * space)))
+                var posY = Canvas.height - sizeY
+                ctx.fillRect(posX, posY, sizeX, sizeY)
+                ctx.textAlign = "center";
+                ctx.fillStyle = "#181818"
+                ctx.font = "25px Arial";
+                ctx.fillText(Math.round((1 / sizeList) * 10000) / 100 + "%", posX + sizeX / 2, posY + 40)
+                ctx.textAlign = "left";
+
+                let xText = sizeX / 2 - 10;
+                let yText = 40
+                ctx.fillStyle = "#00f0ff";
+                ctx.fillText("1", xText + posX, posY - (yText + 35))
+                ctx.save()
+                ctx.translate(xText + posX, posY - (yText + 30))
+                ctx.rotate(Math.PI / 2)
+                ctx.fillText("|", 0, 0)
+                ctx.restore()
+                ctx.fillText(sizeList, xText + posX - 10, posY - yText)
+            }
+
+            ctx.font = "40px Arial";
+            ctx.fillStyle = "#FFF"
+            ctx.fillText("Numero De Sorteios: ∞", 20, 50)
+        }
+    }
+</script>
+
+</html>
