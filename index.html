@@ -25,7 +25,20 @@
 <body>
     <canvas id="Grafico"></canvas>
 </body>
+  
 <script>
+    if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+        document.body.innerHTML = `
+            <h1 style="
+                color:white;
+                font-family:Arial;
+                text-align:center;
+                margin-top:40vh;
+            ">
+                Disponível apenas no computador
+            </h1>
+        `;
+    }
     // Canvas Variaveis
     const Canvas = document.getElementById("Grafico");
     const ctx = Canvas.getContext("2d");
