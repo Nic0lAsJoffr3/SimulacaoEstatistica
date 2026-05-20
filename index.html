@@ -11,11 +11,14 @@
             margin: 0;
             overflow: hidden;
             background-color: #121212;
+            background-image: linear-gradient(180deg, #121212 50%, #15202B);
         }
 
         canvas {
             margin: 0;
             padding: 0;
+            width: 100vw;
+            height: 100vh;
         }
     </style>
 </head>
@@ -25,19 +28,14 @@
 </body>
 
 <script>
-    
-        // Canvas Variaveis
-        const Canvas = document.getElementById("Grafico");
-        const ctx = Canvas.getContext("2d");
-        Canvas.width = Math.max(
-            window.innerWidth,
-            window.innerHeight
-        );
 
-        Canvas.height = Math.min(
-            window.innerWidth,
-            window.innerHeight
-        );
+    // Canvas Variaveis
+    const Canvas = document.getElementById("Grafico");
+    const ctx = Canvas.getContext("2d");
+    Canvas.width = window.innerWidth
+
+    Canvas.height = window.innerHeight
+
     if (window.innerWidth < 900 || window.innerWidth < window.innerHeight) {
 
         document.body.innerHTML = `
@@ -62,9 +60,9 @@
     
     `;
     }
-    else{
+    else {
         // Variaveis
-        var sizeList = 15
+        var sizeList = 20
         var sizeSpace = 5
         var barNumbers = new Array(sizeList).fill(0);
         var histBarNumbers = new Array(sizeList).fill(0);
@@ -91,23 +89,6 @@
         // Desenha o grafico do erro relativo
         function loopErroGrafico() {
 
-            ctx.font = "25px Arial";
-
-            ctx.fillStyle = "#FFF"
-            ctx.fillText("Gráfico De Convergência Estatística", graphX - 5, graphY - 20)
-
-            ctx.fillStyle = "#404040"
-            ctx.font = "15px Arial";
-            ctx.fillText("Fonte: Algoritmo", graphX + 150, graphY + graphHeight + 60)
-
-            ctx.fillStyle = "#DDD"
-            ctx.font = "20px Arial";
-            ctx.fillText("Tempo / Quantidade De Sorteios", graphX + 60, graphY + graphHeight + 25)
-            ctx.save();
-            ctx.translate(graphX - 20, graphY + graphHeight - 80);
-            ctx.rotate((Math.PI / 2) * 3);
-            ctx.fillText("Erro Estatístico", 0, 0)
-            ctx.restore();
             historico.push(erroRelativo(barNumbers));
 
             if (historico.length > maxHistorico) {
@@ -122,7 +103,6 @@
             ctx.rect(graphX, graphY, graphWidth, graphHeight);
             ctx.clip();
             ctx.beginPath();
-
             for (let i = 0; i < historico.length; i++) {
 
                 let x = graphX + i * 5;
@@ -143,6 +123,30 @@
             ctx.strokeStyle = "white";
             ctx.lineWidth = 2;
             ctx.strokeRect(graphX, graphY, graphWidth, graphHeight);
+            ctx.font = "25px Arial";
+
+            ctx.fillStyle = "#FFF"
+            ctx.fillText("Gráfico De Convergência Estatística", graphX - 5, graphY - 20)
+
+            ctx.fillStyle = "#00f0ff"
+            ctx.font = "20px Arial";
+            ctx.fillText("Erro Relativo Atual: " + Math.round(historico.at(-1) * 100) / 100 + "%", graphX + 5, graphY + 20)
+
+            ctx.fillStyle = "#404040"
+            ctx.font = "15px Arial";
+            ctx.fillText("Fonte: Algoritmo", graphX + 150, graphY + graphHeight + 60)
+
+            ctx.fillStyle = "#DDD"
+            ctx.font = "20px Arial";
+            ctx.fillText("Tempo / Quantidade De Sorteios", graphX + 60, graphY + graphHeight + 25)
+            ctx.save();
+            ctx.translate(graphX - 20, graphY + graphHeight - 80);
+            ctx.rotate((Math.PI / 2) * 3);
+            ctx.fillText("Erro Estatístico", 0, 0)
+            ctx.restore();
+
+
+
         }
     }
     function erroRelativo(lista) {
@@ -172,17 +176,16 @@
                 var posX = ((i * sizeX + ((i + 1) * space)))
                 var posY = Canvas.height - sizeY
                 ctx.fillRect(posX, posY, sizeX, sizeY)
-
-                let xText = sizeX / 2 - 10;
+                ctx.textAlign = "center";
+                ctx.fillStyle = "#181818"
+                ctx.font = "25px Arial";
+                ctx.fillText(Math.round(barNumbers[i] / NumeroDeSorteios*10000)/100+"%", posX+sizeX/2, posY+40)
+                ctx.textAlign = "left";
+                let xText = sizeX / 2-17.5;
                 let yText = 40
                 ctx.fillStyle = ((barNumbers[i] == histBarNumbers[i]) ? "#005a61" : "#00f0ff")
-                ctx.fillText("1", xText + posX, posY - (yText + 35))
-                ctx.save()
-                ctx.translate(xText + posX, posY - (yText + 30))
-                ctx.rotate(Math.PI / 2)
-                ctx.fillText("|", 0, 0)
-                ctx.restore()
-                ctx.fillText(sizeList, xText + posX - 10, posY - yText)
+                ctx.fillText(i+1, xText + posX, posY - (yText -15))
+                
 
                 histBarNumbers[i] = barNumbers[i];
             }
@@ -196,7 +199,7 @@
                 barNumbers[Math.floor(Math.random() * sizeList)]++
                 NumeroDeSorteios++
             }
-            speed *= 1.05;
+            speed *= 1.08;
             zoom *= (1 + (speed / zoom / 3000));
         }
         else {
@@ -204,13 +207,17 @@
 
                 ctx.fillStyle = "#00f0ff"
                 ctx.font = "25px Arial";
-                ctx.fillStyle = "#00f0ff";
                 var space = sizeSpace
                 var sizeY = barNumbers[0] / zoom
                 var sizeX = ((Canvas.width - (space * (sizeList + 1))) / sizeList);
                 var posX = ((i * sizeX + ((i + 1) * space)))
                 var posY = Canvas.height - sizeY
                 ctx.fillRect(posX, posY, sizeX, sizeY)
+                ctx.textAlign = "center";
+                ctx.fillStyle = "#181818"
+                ctx.font = "25px Arial";
+                ctx.fillText(Math.round((1/sizeList)*10000)/100+"%", posX+sizeX/2, posY+40)
+                ctx.textAlign = "left";
 
                 let xText = sizeX / 2 - 10;
                 let yText = 40
