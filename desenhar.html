@@ -41,7 +41,7 @@
 
     // Variaveis
     var sizeList = parseInt(params.get("sizeBar"));
-
+    var maxSorteados = parseInt(params.get("maxSorteados"))
     var sizeSpace = 5
     var barNumbers = [];
     var histBarNumbers = [];
@@ -52,7 +52,7 @@
     var speed = 0.001;
     var zoom = 0.1
     var NumeroDeSorteios = 0;
-    let maxHistorico = 85;
+    let maxHistorico = 100;
 
     let graphWidth = 400;
     let graphHeight = 300;
@@ -71,9 +71,9 @@
     let historico = [];
     // Desenha o grafico do erro relativo
     function loopErroGrafico() {
-
-        historico.push(erroRelativo(barNumbers));
-
+        if (NumeroDeSorteios < maxSorteados) {
+            historico.push(erroRelativo(barNumbers));
+        }
         if (historico.length > maxHistorico) {
             historico.shift();
         }
@@ -88,7 +88,7 @@
         ctx.beginPath();
         for (let i = 0; i < historico.length; i++) {
 
-            let x = graphX + i * 5;
+            let x = graphX + i*4;
 
             let y = graphY + graphHeight - historico[i] * 70;
 
@@ -113,7 +113,7 @@
 
         ctx.fillStyle = "#00f0ff"
         ctx.font = "20px Arial";
-        ctx.fillText("Erro Relativo Atual: " + Math.round(historico.at(-1) * 100) / 100 + "%", graphX + 5, graphY + 20)
+        ctx.fillText("Erro Relativo Atual ≈ " + Math.round(historico.at(-1) * 1000) / 1000 + "%", graphX + 5, graphY + 20)
 
         ctx.fillStyle = "#404040"
         ctx.font = "15px Arial";
@@ -147,77 +147,127 @@
 
     // Desenha o grafico de barras
     function loopBar() {
-        if (NumeroDeSorteios < 10000000) {
-            for (var i = 0; i < sizeList; i++) {
 
-                ctx.fillStyle = "#00f0ff"
-                ctx.font = "25px Arial";
-                var space = sizeSpace
+        for (var i = 0; i < sizeList; i++) {
 
-                var sizeY = barNumbers[i] / zoom
-                var sizeX = ((Canvas.width - (space * (sizeList + 1))) / sizeList);
-                var posX = ((i * sizeX + ((i + 1) * space)))
-                var posY = Canvas.height - sizeY
-                ctx.fillRect(posX, posY, sizeX, sizeY)
-                ctx.textAlign = "center";
-                ctx.fillStyle = "#181818"
-                ctx.font = "25px Arial";
-                ctx.fillText(Math.round(barNumbers[i] / NumeroDeSorteios * 10000) / 100 + "%", posX + sizeX / 2, posY + 40)
-                ctx.textAlign = "left";
-                let xText = sizeX / 2 - 17.5;
-                let yText = 40
-                ctx.fillStyle = ((barNumbers[i] == histBarNumbers[i]) ? "#005a61" : "#00f0ff")
-                ctx.fillText(i + 1, xText + posX, posY - (yText - 15))
+            ctx.fillStyle = "#00f0ff"
+            ctx.font = "25px Arial";
+            var space = sizeSpace
+
+            var sizeY = barNumbers[i] / zoom
+            var sizeX = ((Canvas.width - (space * (sizeList + 1))) / sizeList);
+            var posX = ((i * sizeX + ((i + 1) * space)))
+            var posY = Canvas.height - sizeY
+            ctx.fillRect(posX, posY, sizeX, sizeY)
+            ctx.textAlign = "center";
+            ctx.fillStyle = "#181818"
+            ctx.font = "25px Arial";
+            ctx.fillText(Math.round(barNumbers[i] / NumeroDeSorteios * 10000) / 100 + "%", posX + sizeX / 2, posY + 40)
+            ctx.textAlign = "left";
+            let xText = sizeX / 2 - 17.5;
+            let yText = 40
+            ctx.fillStyle = ((barNumbers[i] == histBarNumbers[i]) ? "#005a61" : "#00f0ff")
+            ctx.fillText(i + 1, xText + posX, posY - (yText - 15))
 
 
-                histBarNumbers[i] = barNumbers[i];
-            }
+            histBarNumbers[i] = barNumbers[i];
+        }
 
-            ctx.font = "40px Arial";
-            ctx.fillStyle = "#FFF"
-            ctx.fillText("Numero De Sorteios: " + NumeroDeSorteios, 20, 50)
+        ctx.font = "40px Arial";
+        ctx.fillStyle = "#FFF"
+        ctx.fillText("Numero De Sorteios: " + NumeroDeSorteios, 20, 50);
 
-            // Sorteia e adiciona os numeros
-            for (var i = 0; i < speed; i++) {
+
+        // Sorteia e adiciona os numeros
+        for (var i = 0; i < speed; i++) {
+            if (NumeroDeSorteios < maxSorteados) {
                 barNumbers[Math.floor(Math.random() * sizeList)]++
                 NumeroDeSorteios++
             }
+        }
+        if (NumeroDeSorteios < maxSorteados) {
             speed *= 1.08;
             zoom *= (1 + (speed / zoom / 3000));
         }
-        else {
-            for (var i = 0; i < sizeList; i++) {
 
-                ctx.fillStyle = "#00f0ff"
-                ctx.font = "25px Arial";
-                var space = sizeSpace
-                var sizeY = barNumbers[0] / zoom
-                var sizeX = ((Canvas.width - (space * (sizeList + 1))) / sizeList);
-                var posX = ((i * sizeX + ((i + 1) * space)))
-                var posY = Canvas.height - sizeY
-                ctx.fillRect(posX, posY, sizeX, sizeY)
-                ctx.textAlign = "center";
-                ctx.fillStyle = "#181818"
-                ctx.font = "25px Arial";
-                ctx.fillText(Math.round((1 / sizeList) * 10000) / 100 + "%", posX + sizeX / 2, posY + 40)
-                ctx.textAlign = "left";
-
-                let xText = sizeX / 2 - 10;
-                let yText = 40
-                ctx.fillStyle = "#00f0ff";
-                ctx.fillText("1", xText + posX, posY - (yText + 35))
-                ctx.save()
-                ctx.translate(xText + posX, posY - (yText + 30))
-                ctx.rotate(Math.PI / 2)
-                ctx.fillText("|", 0, 0)
-                ctx.restore()
-                ctx.fillText(sizeList, xText + posX - 10, posY - yText)
-            }
-
-            ctx.font = "40px Arial";
-            ctx.fillStyle = "#FFF"
-            ctx.fillText("Numero De Sorteios: ∞", 20, 50)
+        ctx.font = "30px Arial";
+        ctx.fillStyle = "#FFF"
+        let somaTodosSorteados = 0;
+        for (var i = 0; i < sizeList; i++) {
+            somaTodosSorteados += barNumbers[i] * (i + 1);
         }
+        MediaAmostral = Math.round(somaTodosSorteados / NumeroDeSorteios * 10000) / 10000;
+
+        let yMedia = 200
+        let xMedia = 50;
+        ctx.fillText("Média Amostral: ", xMedia, yMedia - 50)
+        ctx.font = "30px Arial";
+        ctx.fillStyle = "#FFF"
+
+        ctx.fillText("X =", xMedia, yMedia + 15)
+        ctx.fillText("∑​", xMedia + 60, yMedia)
+        ctx.font = "italic 16px Times New Roman";
+        ctx.fillText("n​", xMedia + 85, yMedia - 14)
+        ctx.fillText("i​", xMedia + 85, yMedia + 7.5)
+        ctx.font = "12px Arial";
+        ctx.fillText("= 1", xMedia + 95, yMedia + 7.5)
+        ctx.font = "30px Arial";
+        ctx.fillText("X​", xMedia + 120, yMedia + 5)
+
+        ctx.font = "italic 16px Times New Roman";
+        ctx.fillText("i​​​", xMedia + 145, yMedia + 7.5)
+        ctx.font = "30px Arial";
+        ctx.fillText("n", xMedia + 100, yMedia + 45)
+
+        xMedia += 170
+        ctx.fillText("=>", xMedia, yMedia + 15)
+
+        ctx.textAlign = "center"
+        ctx.fillText(somaTodosSorteados, xMedia + 140, yMedia)
+        ctx.fillText(NumeroDeSorteios, xMedia + 140, yMedia + 45)
+        ctx.beginPath();
+        ctx.moveTo(xMedia + 57.5, yMedia + 12.5);
+        ctx.lineTo(xMedia + 225, yMedia + 12.5);
+        ctx.stroke();
+        ctx.textAlign = "left"
+
+        ctx.fillText("≈ " + MediaAmostral, xMedia + 240, yMedia + 15)
+
+
+        xMedia -= 170
+        ctx.beginPath();
+        ctx.moveTo(xMedia + 57.5, yMedia + 17.5);
+        ctx.lineTo(xMedia + 160, yMedia + 17.5);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(xMedia, yMedia - 15);
+        ctx.lineTo(xMedia + 20, yMedia - 15);
+        ctx.stroke();
+
+        yMedia += 150
+
+        ctx.fillText("Média Esperada: ", xMedia, yMedia - 50)
+        ctx.font = "30px Arial";
+        ctx.fillStyle = "#FFF"
+
+        ctx.fillText("μ =", xMedia, yMedia + 15)
+        ctx.fillText("a + b", xMedia + 60, yMedia)
+        ctx.fillText("2", xMedia + 85, yMedia + 45)
+        ctx.beginPath();
+        ctx.moveTo(xMedia + 57.5, yMedia + 12.5);
+        ctx.lineTo(xMedia + 130, yMedia + 12.5);
+        ctx.stroke();
+
+        xMedia += 150
+        ctx.fillText("=>", xMedia, yMedia + 15)
+        ctx.fillText("1 + " + sizeList, xMedia + 60, yMedia)
+        ctx.fillText("2", xMedia + 95, yMedia + 45)
+        ctx.beginPath();
+        ctx.moveTo(xMedia + 57.5, yMedia + 12.5);
+        ctx.lineTo(xMedia + 150, yMedia + 12.5);
+        ctx.stroke();
+        ctx.fillText("=  " + ((1 + sizeList) / 2), xMedia + 165, yMedia + 15)
     }
 </script>
 
