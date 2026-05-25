@@ -10,8 +10,10 @@
             padding: 0;
             margin: 0;
             overflow: hidden;
+            
             background-color: #121212;
             background-image: linear-gradient(180deg, #121212 50%, #15202B);
+            
         }
 
         canvas {
@@ -58,13 +60,31 @@
 
     let graphX = 0;
     let graphY = 0;
-    let GeralY = 0
+    let GeralY = 0;
+
+    let somaTodosSorteados = 0;
     // Loop
     setInterval(() => {
         ctx.clearRect(0, 0, Canvas.width, Canvas.height);
+
+        somaTodosSorteados = 0;
+        for (var i = 0; i < sizeList; i++) {
+            somaTodosSorteados += barNumbers[i] * (i + 1);
+        }
+        // Sorteia e adiciona os numeros
+        for (var i = 0; i < speed; i++) {
+            if (NumeroDeSorteios < maxSorteados) {
+                barNumbers[Math.floor(Math.random() * sizeList)]++
+                NumeroDeSorteios++
+            }
+        }
+        if (NumeroDeSorteios < maxSorteados) {
+            speed *= 1.1;
+        }
         loopBar();
-        loopErroGrafico()
+
         loopMediaGrafico()
+        loopErroGrafico()
 
     }, 100)
 
@@ -73,13 +93,19 @@
     let historicoMedia = [];
     // Desenha o grafico do erro relativo
     function loopErroGrafico() {
-        graphWidth = 900;
+        graphWidth = (Canvas.width / 2) * 0.85;
         graphHeight = 200;
         graphX = Canvas.width - graphWidth - 75;
-        graphY = 500;
+        graphY = Canvas.height / 10 * 4.25;
         if (NumeroDeSorteios < maxSorteados) {
             let esperado = 1 / sizeList
-            historicoConvergencia.push((desvioPadrao(barNumbers) / Math.sqrt(NumeroDeSorteios)));
+            historicoConvergencia.push({
+                erro:
+                    desvioPadrao(barNumbers) /
+                    Math.sqrt(NumeroDeSorteios),
+
+                n: NumeroDeSorteios
+            });
         }
 
 
@@ -93,44 +119,64 @@
 
         ctx.beginPath();
 
-        ctx.moveTo(graphX, graphY + graphHeight/2 );
-        ctx.lineTo(graphX + graphWidth, graphY + graphHeight/2 );
+        ctx.moveTo(graphX, graphY + graphHeight / 2);
+        ctx.lineTo(graphX + graphWidth, graphY + graphHeight / 2);
 
         ctx.strokeStyle = "red"
         ctx.lineWidth = 1;
         ctx.stroke();
-        ctx.beginPath();
-        for (let i = 0; i < historicoConvergencia.length; i++) {
 
-            let x = graphX + i * (graphX / historicoConvergencia.length);
+        for (var f = 0; f <= 1 && historicoConvergencia.length > 0; f++) {
+            ctx.beginPath();
+            let maxN =
+                historicoConvergencia.at(-1).n;
+            let menosX = 0
+            let minN =
+                historicoConvergencia[0].n;
+            for (let i = 0; i < historicoConvergencia.length; i++) {
 
-            let y = (graphY + graphHeight/2 - historicoConvergencia[i] *40 );
+                let ponto = historicoConvergencia[i];
 
-            if (i == 0)
-                ctx.moveTo(x, y);
-            else
-                ctx.lineTo(x, y);
+                let x =
+                    graphX +
+                    (
+                        (Math.log10(ponto.n) - Math.log10(minN)) /
+                        (Math.log10(maxN) - Math.log10(minN))
+                    ) * graphWidth;
+
+                let valorY = ponto.erro * (f == 0 ? 1 : -1);
+                if ((valorY == 0 && i < 5)) {
+                    historicoConvergencia.pop()
+                }
+                else {
+
+
+                    let meioY = graphY + graphHeight / 2;
+
+                    let maxValor = Math.max(
+                        ...historicoConvergencia.map(v => v.erro)
+                    )
+
+                    maxValor *= 1.1;
+
+                    let escala =
+                        (graphHeight / 2) / maxValor;
+
+                    let y =
+                        meioY -
+                        valorY * escala;
+
+                    if (i == 0)
+                        ctx.moveTo(x, y);
+                    else
+                        ctx.lineTo(x, y);
+                }
+            }
+
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = "#00f0ff";
+            ctx.stroke();
         }
-
-        ctx.lineWidth = 2;
-        ctx.strokeStyle = "#00f0ff";
-        ctx.stroke();
-        ctx.beginPath();
-        for (let i = 0; i < historicoConvergencia.length; i++) {
-
-            let x = graphX + i * (graphX / historicoConvergencia.length);
-
-            let y = (graphY + graphHeight/2 - (-historicoConvergencia[i])*40 ) ;
-
-            if (i == 0)
-                ctx.moveTo(x, y);
-            else
-                ctx.lineTo(x, y);
-        }
-
-        ctx.lineWidth = 2;
-        ctx.strokeStyle = "#00f0ff";
-        ctx.stroke();
         ctx.restore();
 
         ctx.strokeStyle = "white";
@@ -147,7 +193,7 @@
 
         ctx.fillStyle = "#DDD"
         ctx.font = "20px Arial";
-        ctx.fillText("Quantidade De Sorteios", graphX + (graphWidth / 2), graphY + graphHeight + 25)
+        ctx.fillText("Quantidade De Sorteios (Escala Logarítmica)", graphX + (graphWidth / 2), graphY + graphHeight + 25)
         ctx.save();
         ctx.translate(graphX - 20, graphY + (graphHeight / 2));
         ctx.rotate((Math.PI / 2) * 3);
@@ -159,10 +205,10 @@
     }
 
     function loopMediaGrafico() {
-        graphWidth = 800;
+        graphWidth = (Canvas.width / 2) * 0.85;
         graphHeight = 200;
         graphX = 75;
-        graphY = 500;
+        graphY = Canvas.height / 10 * 4.25;
 
         if (NumeroDeSorteios < maxSorteados) {
 
@@ -171,8 +217,10 @@
                 somaTodosSorteados += barNumbers[i] * (i + 1);
             }
             MediaAmostral = Math.round(somaTodosSorteados / NumeroDeSorteios * 10000) / 10000;
-
-            historicoMedia.push(MediaAmostral);
+            historicoMedia.push({
+                media: MediaAmostral,
+                n: NumeroDeSorteios
+            });
         }
 
 
@@ -194,11 +242,42 @@
 
 
         ctx.beginPath();
+        let maxN = historicoMedia.at(-1).n;
+
         for (let i = 0; i < historicoMedia.length; i++) {
 
-            let x = graphX + i * (graphWidth / historicoMedia.length);
+            let ponto = historicoMedia[i];
+            let minN = historicoMedia[0].n;
 
-            let y = ((graphY + graphHeight/2) - (historicoMedia[i] - ((1+sizeList)/2))*40);
+            let x =
+                graphX +
+                (
+                    (Math.log10(ponto.n) - Math.log10(minN)) /
+                    (Math.log10(maxN) - Math.log10(minN))
+                ) * graphWidth;
+
+            let valorY = ponto.media;
+
+            let centroValor = (sizeList + 1) / 2;
+
+            let meioY = graphY + graphHeight / 2;
+
+            let diferenca = valorY - centroValor;
+
+            // escala dinâmica
+            let maxDist = Math.max(
+                ...historicoMedia.map(v =>
+                    Math.abs(v.media - centroValor)
+                )
+            ) || 1;
+
+            maxDist *= 1.1;
+
+            let escala = (graphHeight / 2) / maxDist;
+
+            let y =
+                meioY -
+                diferenca * escala;
 
             if (i == 0)
                 ctx.moveTo(x, y);
@@ -225,7 +304,7 @@
 
         ctx.fillStyle = "#DDD"
         ctx.font = "20px Arial";
-        ctx.fillText("Quantidade De Sorteios", graphX + (graphWidth / 2), graphY + graphHeight + 25)
+        ctx.fillText("Quantidade de Sorteios (Escala Logarítmica)", graphX + (graphWidth / 2), graphY + graphHeight + 25)
 
         ctx.save();
         ctx.translate(graphX - 20, graphY + (graphHeight / 4));
@@ -245,60 +324,60 @@
         ctx.textAlign = "left";
         ctx.fillStyle = "#00f0ff"
         ctx.fillText("Erro Da Média: ", xMedia, yMedia - 50)
-        xMedia -= 155
+
         ctx.fillStyle = "#fff"
         ctx.strokeStyle = "#fff"
 
         ctx.save();
-        ctx.scale(0.85, 0.85);
-        ctx.translate(460, -35)
+        ctx.scale(0.8, 0.8);
+        ctx.translate(20, 30)
         ctx.font = "30px Arial";
         ctx.fillStyle = "#FFF"
-
+        xMedia += 145
         ctx.fillText("σ", xMedia + 90, yMedia + 10)
         ctx.fillText("\u221A n", xMedia + 75, yMedia + 55)
         ctx.fillText("=> ", xMedia + 135, yMedia + 35)
-        xMedia += 50;
+
         ctx.beginPath();
-        ctx.moveTo(xMedia + 25, yMedia + 17.5);
-        ctx.lineTo(xMedia + 75, yMedia + 17.5);
+        ctx.moveTo(xMedia + 75, yMedia + 17.5);
+        ctx.lineTo(xMedia + 125, yMedia + 17.5);
         ctx.stroke();
         ctx.beginPath();
-        ctx.moveTo(xMedia + 40, yMedia + 27.5);
-        ctx.lineTo(xMedia + 75, yMedia + 27.5);
+        ctx.moveTo(xMedia + 90, yMedia + 27.5);
+        ctx.lineTo(xMedia + 125, yMedia + 27.5);
         ctx.stroke();
-        xMedia += 55
-        ctx.fillText(Math.round(desvioPadrao(barNumbers)*1000000000)/1000000000, xMedia + 90, yMedia + 10)
-        ctx.fillText("\u221A "+NumeroDeSorteios, xMedia + 75, yMedia + 55)
-        ctx.fillText("≈ " + Math.round(historicoConvergencia.at(-1)*10000)/10000, xMedia + 285, yMedia + 35)
-        xMedia += 50;
+        ctx.fillText(Math.round(desvioPadrao(barNumbers) * 1000000000) / 1000000000, xMedia + 195, yMedia + 10)
+        ctx.fillText("\u221A " + NumeroDeSorteios, xMedia + 180, yMedia + 55)
+        ctx.fillText("≈ " + Math.round(historicoConvergencia.at(-1)?.erro * 10000) / 10000, xMedia + 390, yMedia + 35)
+
         ctx.beginPath();
-        ctx.moveTo(xMedia + 25, yMedia + 17.5);
-        ctx.lineTo(xMedia + 220, yMedia + 17.5);
+        ctx.moveTo(xMedia + 180, yMedia + 17.5);
+        ctx.lineTo(xMedia + 375, yMedia + 17.5);
         ctx.stroke();
         ctx.beginPath();
-        ctx.moveTo(xMedia + 40, yMedia + 27.5);
-        ctx.lineTo(xMedia + 220, yMedia + 27.5);
+        ctx.moveTo(xMedia + 195, yMedia + 27.5);
+        ctx.lineTo(xMedia + 375, yMedia + 27.5);
         ctx.stroke();
 
 
         ctx.restore();
 
-        
-        yMedia += 100
+        xMedia = xm;
+        yMedia += 120
         ctx.font = "25px Arial";
         ctx.textAlign = "left";
         ctx.fillStyle = "red"
         ctx.fillText("Erro da Média Esperado: ", xMedia, yMedia - 50)
-        xMedia += 10
+
         ctx.fillStyle = "#fff"
         ctx.strokeStyle = "#fff"
 
         ctx.save();
-        ctx.scale(0.85, 0.85);
-        ctx.translate(500, -10)
+        ctx.scale(0.8, 0.8);
+        ctx.translate(20, 65)
         ctx.font = "30px Arial";
         ctx.fillStyle = "#FFF"
+        xMedia += 220
 
         ctx.fillText("Lim     σ", xMedia, yMedia + 10)
         ctx.fillText("\u221A n", xMedia + 75, yMedia + 55)
@@ -327,13 +406,10 @@
     function TextoMedia(xm, ym) {
 
         let yMedia = ym - 200;
-        let xMedia = xm - 50;
+        let xMedia = xm;
 
-        let somaTodosSorteados = 0;
-        for (var i = 0; i < sizeList; i++) {
-            somaTodosSorteados += barNumbers[i] * (i + 1);
-        }
-        MediaAmostral = Math.round(somaTodosSorteados / NumeroDeSorteios * 10000) / 10000;
+
+
 
 
 
@@ -345,8 +421,8 @@
         ctx.fillStyle = "#fff"
         ctx.strokeStyle = "#fff"
         ctx.save();
-        ctx.scale(0.85, 0.85);
-        ctx.translate(320, -30)
+        ctx.scale(0.8, 0.8);
+        ctx.translate(30, 45)
         ctx.font = "30px Arial";
 
         ctx.fillText("X =", xMedia, yMedia + 15)
@@ -376,8 +452,7 @@
         ctx.stroke();
         ctx.textAlign = "left"
 
-        ctx.fillText("≈ " + MediaAmostral, xMedia + 240, yMedia + 15)
-
+        ctx.fillText("≈ " + historicoMedia.at(-1).media, xMedia + 240, yMedia + 15)
 
         xMedia -= 170
         ctx.beginPath();
@@ -391,13 +466,13 @@
         ctx.stroke();
         ctx.restore();
 
-        yMedia += 100
+        yMedia += 120
 
         ctx.fillStyle = "Red"
         ctx.fillText("Média Esperada: ", xMedia, yMedia - 50)
         ctx.save();
-        ctx.scale(0.85, 0.85);
-        ctx.translate(250, -20)
+        ctx.scale(0.8, 0.8);
+        ctx.translate(30, 70)
         ctx.font = "30px Arial";
         ctx.fillStyle = "#FFF"
 
@@ -423,17 +498,17 @@
     }
     function desvioPadrao(lista) {
 
-        // total de amostras (n)
+        // total 
         let n = lista.reduce((a, b) => a + b, 0);
 
-        // média ponderada
+        // média 
         let soma = 0;
         for (let i = 0; i < lista.length; i++) {
             soma += (i + 1) * lista[i];
         }
         let media = soma / n;
 
-        // variância ponderada
+        // variância 
         let variancia = 0;
         for (let i = 0; i < lista.length; i++) {
             variancia += lista[i] * ((i + 1 - media) ** 2);
@@ -450,52 +525,55 @@
         for (var i = 0; i < sizeList; i++) {
 
             ctx.fillStyle = "#00f0ff"
-            ctx.font = "25px Arial";
+
             var space = sizeSpace
 
-            var sizeY = (barNumbers[i] / zoom) - GeralY
-
-            while (sizeY >= 200) {
-                GeralY++
-                sizeY = (barNumbers[i] / zoom) - GeralY
-            }
+            var sizeY = ((barNumbers[i] / NumeroDeSorteios)) / (Math.max(...barNumbers) / NumeroDeSorteios) * (Canvas.height / 10 * 2)
 
             var sizeX = ((Canvas.width - (space * (sizeList + 1))) / sizeList);
 
             var posX = ((i * sizeX + ((i + 1) * space)))
             var posY = Canvas.height - sizeY
             ctx.fillRect(posX, posY, sizeX, sizeY)
-            ctx.textAlign = "center";
-            ctx.fillStyle = "#181818"
 
-            ctx.font = "25px Arial";
-            ctx.fillText(Math.round(barNumbers[i] / NumeroDeSorteios * 10000) / 100 + "%", posX + sizeX / 2, posY + 40)
-            ctx.textAlign = "left";
-            let xText = sizeX / 2 - 17.5;
-            let yText = 40
-            ctx.fillStyle = ((barNumbers[i] == histBarNumbers[i]) ? "#005a61" : "#00f0ff")
-            ctx.fillText(i + 1, xText + posX, posY - (yText - 15))
+            fontSize = Math.min(Math.round(sizeX / 2), 25)
+            if (sizeList <= 75) {
+                ctx.font = fontSize + "px Arial";
+                ctx.textAlign = "center";
+                ctx.fillStyle = "#181818"
+                if (sizeList <= 20) {
 
+                    ctx.font = (fontSize * 0.9) + "px Arial";
+                    ctx.fillText(Math.round(barNumbers[i] / NumeroDeSorteios * 10000) / 100 + "%", posX + sizeX / 2, posY + 40)
+                }
+                ctx.textAlign = "center";
+                let xText = (space / 2) + sizeX / 2;
+                let yText = 40
+                ctx.fillStyle = ((barNumbers[i] == histBarNumbers[i]) ? "#005a61" : "#00f0ff")
 
+                ctx.fillText(i + 1, xText + posX, posY - (yText - 15))
+
+            }
             histBarNumbers[i] = barNumbers[i];
         }
 
-        ctx.font = "40px Arial";
+        ctx.textAlign = "left";
+        // Desenhar a barra da media:
+        ctx.fillStyle = "red"
+        var XbarraMedia = ((historicoMedia.at(-1)?.media) * (Canvas.width / 2) / ((sizeList + 1) / 2))
+        console.log(XbarraMedia)
+        ctx.fillRect(XbarraMedia, Canvas.height / 10 * 7.9, 5, Canvas.height / 10 * 2.1)
+
+
+        ctx.font = "35px Arial";
         ctx.fillStyle = "#FFF"
-        ctx.fillText("Numero De Sorteios: " + NumeroDeSorteios, 20, 50);
+        ctx.fillText("Numero De Sorteios: " + NumeroDeSorteios, 20, 35);
+
+        ctx.font = "20px Arial";
+        ctx.fillText("Velocidade: " + (Math.round((1 + speed))) + "x", 20, 65);
 
 
-        // Sorteia e adiciona os numeros
-        for (var i = 0; i < speed; i++) {
-            if (NumeroDeSorteios < maxSorteados) {
-                barNumbers[Math.floor(Math.random() * sizeList)]++
-                NumeroDeSorteios++
-            }
-        }
-        if (NumeroDeSorteios < maxSorteados) {
-            speed *= 1 + (sizeList) / 200;
-            zoom *= (1 + (speed / zoom / 3000));
-        }
+
 
     }
 </script>
