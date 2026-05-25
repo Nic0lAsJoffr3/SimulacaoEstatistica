@@ -10,8 +10,11 @@
             padding: 0;
             margin: 0;
             overflow: hidden;
+             width: 100vw;
+             height: 100vh;
             background-color: #121212;
             background-image: linear-gradient(180deg, #121212 50%, #15202B);
+            
         }
 
         .InputDiv {
@@ -19,7 +22,7 @@
             margin: 10vh 35vw 15vh 35vw;
             width: 30vw;
             height: 60vh;
-            background-color: #181818b2;
+            background-color: #0000001e;
             box-shadow: #192a3b 0px 0px 15px;
             border-radius: 20px;
         }
@@ -43,22 +46,23 @@
             position: absolute;
             text-align: center;
             width: 100%;
+            overflow: hidden;
         }
 
         h1 {
             top: 0;
-            font-size: 25px;
+            font-size: clamp(15px, 1vw, 25px);
         }
 
         h2 {
-            font-size: 20px;
+            font-size: clamp(10px, 1vw, 20px);
             position: absolute;
         }
 
         .InputDiv input {
             text-align: center;
             font-size: 30px;
-            background-color: #202020;
+            background-color: #0e0e0e9c;
             color: white;
             border: #15202B 1px solid;
         }
